@@ -42,9 +42,8 @@ class db_class{
         $this->path_to_errors = $this->path_to_errors . 'PDOErrors' . date('Y-m-d-H-i-s') . '.log';
        
         if($this->Connect($dbconfig) == false) {
-            $this->addError('ERROR Database connection failed');
-            $this->displayError();
-            if($this->db_debug) {var_dump($this);}
+            $this->addError('ERROR Database connection failed');            
+            if($this->db_debug) {$this->displayError(); var_dump($this);}
             return false;
 
         }else{
@@ -72,7 +71,13 @@ class db_class{
             return $this->db;
         } catch (PDOException $e) {
             $this->addError('ERROR: ' . $e->getMessage());
-            file_put_contents($this->path_to_errors, $e->getMessage(), FILE_APPEND);            
+            //if path_to_errors is writable to create log file
+            if(is_writable($this->path_to_errors)){
+                file_put_contents($this->path_to_errors, $e->getMessage(), FILE_APPEND);
+                $this->addError('ERROR: written to ' . $this->path_to_errors);
+            }else{
+                $this->addError('ERROR: path_to_errors not writable');
+            }                   
             return false;
         }
         return false;
