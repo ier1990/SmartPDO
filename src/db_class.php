@@ -37,8 +37,8 @@ Overall, the db_class.php file provides a solid foundation for handling database
 
 
 //class api
-class db_class{
-    private $path_to_dbconfig = 'C:/xampp/htdocs/ier1990/PHP-PDO-Class/private/dbconfig.php';
+class db_class{    
+    private $path_to_dbconfig = 'C:/xampp/htdocs/ier1990/PHP-PDO-Class/private/dbconfig.php';    
     private $path_to_errors = 'C:/xampp/htdocs/ier1990/PHP-PDO-Class/private/log/';    
     private $settings;
     private $config;
@@ -59,8 +59,7 @@ class db_class{
      * @access public
      * @return object
      */    
-    public function __construct($dbconfig=false) {
-        $this->path_to_errors = $this->path_to_errors . 'PDOErrors' . date('Y-m-d-H-i-s') . '.log';
+    public function __construct($dbconfig=false) {        
        
         if($this->Connect($dbconfig) == false) {
             $this->addError('ERROR Database connection failed');            
@@ -94,8 +93,10 @@ class db_class{
             $this->addError('ERROR: ' . $e->getMessage());
             //if path_to_errors is writable to create log file
             if(is_writable($this->path_to_errors)){
+                $this->path_to_errors = $this->path_to_errors . 'PDOErrors' . date('Y-m-d-H-i-s') . '.log';   
                 file_put_contents($this->path_to_errors, $e->getMessage(), FILE_APPEND);
                 $this->addError('ERROR: written to ' . $this->path_to_errors);
+                exit;
             }else{
                 $this->addError('ERROR: path_to_errors not writable');
             }                   
@@ -134,10 +135,44 @@ class db_class{
         $this->addError('Success Database settings loaded');
         return $this->settings;
     }
-    //query()
-    public function query($query) {
-        //echo $query;
+    
 
+    /**
+     * Query database
+     * @access public
+     * @return array
+     */
+    public function query($query,$params=false) {
+    
+        //trim query
+        $query = trim($query);
+
+        //check if query is empty
+        if(empty($query)){
+            $this->addError('ERROR: query is empty');
+            if($this->db_debug) {$this->displayError();}
+            return false;
+        }
+
+        //check if query string is safe
+        //if $params is not false aka an array 
+        //then query & array can be used to delete|update|insert|create|drop|alter tables
+        //unsure if this is the best way to check for safe queries
+        //consider using prepared statements and parameterized queries for security
+        //hard to do when using this class to update/rewrite old mysql php5 code
+        //https://stackoverflow.com/questions/18239404/how-to-check-if-a-query-is-safe
+        //This stackoverflow question was voluntarily removed by its author.
+        //better to use class from Composer called "voku/anti-xss"            
+        //https://packagist.org/packages/voku/anti-xss
+        if(($params==false) && (preg_match('/(delete|update|insert|create|drop|alter)/i', $query))){
+            $this->addError('ERROR: query is not safe');
+            if($this->db_debug) {$this->displayError();}
+            return false;
+        }
+
+
+        //check if $params is array
+        if(is_array($params)){
             $stmt = $this->db->prepare($query);
             if($stmt==false) {
                 $this->addError('ERROR: prepare');
@@ -145,7 +180,7 @@ class db_class{
                 return false;
             }
             
-            if($stmt->execute() == false) {
+            if($stmt->execute($params) == false) {
                 $this->addError('ERROR: execute');
                 if($this->db_debug) {$this->displayError();}
                 return false;
@@ -156,12 +191,39 @@ class db_class{
                 if($this->db_debug) {$this->displayError();}
                 return false;
             }
-            
             return  $result;
+        }
+
+        //no $params
+        $stmt = $this->db->prepare($query);
+        if($stmt==false) {
+            $this->addError('ERROR: prepare');
+            if($this->db_debug) {$this->displayError();}
+            return false;
+        }
+        
+        if($stmt->execute() == false) {
+            $this->addError('ERROR: execute');
+            if($this->db_debug) {$this->displayError();}
+            return false;
+        }
+        $result = $stmt->fetchAll();
+        if(count($result) == 0){
+            $this->addError('ERROR: fetchAll= 0');
+            if($this->db_debug) {$this->displayError();}
+            return false;
+        }
+        
+        return  $result;
 
 
     }
-    //single()
+    
+    /**
+     * Single query database
+     * @access public
+     * @return array
+     */
     public function single($query) {
         //echo $query;
 
@@ -183,7 +245,11 @@ class db_class{
             return $result;
         }
 
-    //prepare()
+    /**
+     * Prepare statement
+     * @access public
+     * @return object
+     */
     public function prepare($query) {
         //echo $query;
         if($this->db_debug){
@@ -200,8 +266,7 @@ class db_class{
             
             return $stmt;
     } 
-    
-    //execute()
+        
     /*
      * $array = array(':id' => $id, etc
      * $stmt = $db->prepare($query);
@@ -229,7 +294,11 @@ class db_class{
         return true;
     }
 
-    //fetch()
+    /**
+     * Fetch statement
+     * @access public
+     * @return array
+     */
     public function fetch($stmt) {
         //echo $query;
 
@@ -241,7 +310,11 @@ class db_class{
             return $result;
     }
 
-    //fetchAll()
+    /**
+     * Fetch all statement
+     * @access public
+     * @return array
+     */
     public function fetchAll($stmt) {
         //echo $query;
 
@@ -257,12 +330,20 @@ class db_class{
             return $result;
     }
 
-    //lastInsertId()
+    /**
+     * Last insert id
+     * @access public
+     * @return int
+     */
     public function lastInsertId() {
         return $this->db->lastInsertId();
     }
 
-
+    /**
+     * Get current directory
+     * @access public
+     * @return string
+     */
     public function getcwd_name($path=false) {
         //////////////////////////////////////////////
         /// Get current directory for default dfilename
@@ -274,11 +355,20 @@ class db_class{
     }
 
 
-    //addError()
+    /**
+     * Add error to array
+     * @access public
+     * @return array
+     */
     public function addError($error) {
         $this->errors[] = addslashes($error);
     }   
-    //display_error()
+    
+    /**
+     * Display error
+     * @access public
+     * @return string
+     */
     public function displayError($display=true) {
         $a='<pre>';
         foreach($this->errors as $error) {
