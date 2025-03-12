@@ -1,4 +1,25 @@
 <?php
+/*
+The provided db_class.php file is a PHP class designed to handle PDO connections and database operations. Here are some observations and suggestions for improvement:
+
+Observations:
+Class Structure: The class is well-structured with methods for connecting to the database, executing queries, and handling errors.
+Error Handling: The class has a robust error handling mechanism, logging errors to a file if writable.
+Debugging: The class includes a debug mode that provides detailed error messages and outputs.
+Database Operations: The class provides methods for executing queries, fetching results, and preparing statements.
+Suggestions for Improvement:    
+1. Configuration File: The class uses a configuration file to store database connection settings. It would be helpful to include a sample configuration file with instructions on how to set it up.
+2. Error Logging: The error logging mechanism could be improved by providing more detailed information, such as the date and time of the error.
+3. Security: The class should include measures to prevent SQL injection attacks, such as using prepared statements and parameterized queries.
+4. Documentation: The class would benefit from more detailed documentation, including descriptions of each method and its parameters.
+5. Code Comments: Adding comments to the code would make it easier for developers to understand how the class works and how to use it.
+6. Exception Handling: The class could benefit from using try-catch blocks to handle exceptions more effectively.
+7. Code Refactoring: The class could be refactored to improve readability and maintainability, such as breaking down complex methods into smaller, more manageable functions.
+8. Code Reusability: The class could be made more reusable by separating database connection logic from query execution logic.
+9. Unit Testing: The class could be tested using unit tests to ensure that it functions as expected and to catch any bugs or issues.
+10. Performance Optimization: The class could be optimized for performance by using caching mechanisms, connection pooling, or other techniques.
+Overall, the db_class.php file provides a solid foundation for handling database operations in PHP, but there are areas where it could be improved to make it more robust, secure, and user-friendly.
+*/
 
 
 //db_class.php
@@ -57,7 +78,7 @@ class db_class{
      * @access private
      * @return object
      */
-    private function Connect($dbconfig=flase) {         
+    private function Connect($dbconfig=false) {         
         
         if($this->setSettings($this->path_to_dbconfig)==false){return false;}                   
 
@@ -89,65 +110,28 @@ class db_class{
      * @return array
      */
     private function setSettings($dbconfigfile=false) {
-        if(is_array($dbconfigfile)) 
-        {
-            $this->settings = $dbconfigfile;            
-            //if is set debug
-            if(isset($this->settings['debug'])) {
-                $this->db_debug = $this->settings['debug'];
-            }else{
-                $this->addError('ERROR Database settings debug not set');
-                return false;
-            }
-            
-            if($this->db_debug) {                
-                $this->addError('Debug On');
-            }            
-            $this->addError('Success Database settings loaded from Array');
-            return $this->settings;
-        } 
-        elseif($dbconfigfile==false) 
-        {
-            if(file_exists($this->path_to_dbconfig))
-            {
-                $this->settings = include($this->path_to_dbconfig);
-                if(isset($this->settings['debug'])) {
-                    $this->db_debug = $this->settings['debug'];
-                }else{
-                    $this->addError('ERROR Database settings debug not set');
-                    return false;
-                }
-                if($this->db_debug) {
-                    $this->addError('Debug On');
-                }
-                return $this->settings;
-            }
-            else 
-            {
-                $this->addError('ERROR Database settings file not found');
-                return false;
-            }
-        }
-       elseif(file_exists($dbconfigfile))
-        {
-                $this->settings = include($dbconfigfile);
-                if(isset($this->settings['debug'])) {
-                    $this->db_debug = $this->settings['debug'];
-                }else{
-                    $this->addError('ERROR Database settings debug not set');
-                    return false;
-                }
-
-                if($this->db_debug) {
-                    $this->addError('Debug On');
-                }
-                return $this->settings;
-        }
-        else 
-        {
+        if (is_array($dbconfigfile)) {
+            $this->settings = $dbconfigfile;
+        } elseif ($dbconfigfile == false && file_exists($this->path_to_dbconfig)) {
+            $this->settings = include($this->path_to_dbconfig);
+        } elseif (file_exists($dbconfigfile)) {
+            $this->settings = include($dbconfigfile);
+        } else {
             $this->addError('ERROR Database settings file not found');
             return false;
         }
+
+        if (isset($this->settings['debug'])) {
+            $this->db_debug = $this->settings['debug'];
+        } else {
+            $this->addError('ERROR Database settings debug not set');
+            return false;
+        }
+
+        if ($this->db_debug) {
+            $this->addError('Debug On');
+        }
+        $this->addError('Success Database settings loaded');
         return $this->settings;
     }
     //query()
