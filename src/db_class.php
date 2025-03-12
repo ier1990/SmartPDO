@@ -1,14 +1,34 @@
 <?php
 
 
+//db_class.php
+//AI smart class to handle PDO connections
+//by: ierpe
+//date: 2019-01-01  
+//version: 1.0
+//license: MIT
+//usage:
+//include('db_class.php');
+//$db = new db_class();
+//$query = 'SELECT * FROM table';
+//$result = $db->query($query);
+//var_dump($result);
+
+
 //class api
 class db_class{
     private $path_to_dbconfig = 'C:/xampp/htdocs/ier1990/PHP-PDO-Class/private/dbconfig.php';
     private $path_to_errors = 'C:/xampp/htdocs/ier1990/PHP-PDO-Class/private/log/';    
     private $settings;
     private $config;
+
     public $db;
     private $db_dbtype = array('mysql','pgsql','sqlite','oracle');
+    //private $db_port = 3306;
+    //private $db_host = 'localhost';
+    //private $db_dbname = 'database';
+    //private $db_charset = 'utf8';
+    //private $db_prefix = '_';
     private $db_debug = false;// true = show DB-Errors (for development only!)
     public $errors = array();
     
@@ -67,11 +87,18 @@ class db_class{
         if(is_array($dbconfigfile)) 
         {
             $this->settings = $dbconfigfile;            
-            $this->db_debug = isset($this->settings['debug']) ? $this->settings['debug'] : false;
-            if($this->db_debug) {
-                //$this->displayError();
-                $this->addError('Success Database settings loaded from Array');
+            //if is set debug
+            if(isset($this->settings['debug'])) {
+                $this->db_debug = $this->settings['debug'];
+            }else{
+                $this->addError('ERROR Database settings debug not set');
+                return false;
             }
+            
+            if($this->db_debug) {                
+                $this->addError('Debug On');
+            }            
+            $this->addError('Success Database settings loaded from Array');
             return $this->settings;
         } 
         elseif($dbconfigfile==false) 
@@ -79,10 +106,14 @@ class db_class{
             if(file_exists($this->path_to_dbconfig))
             {
                 $this->settings = include($this->path_to_dbconfig);
-                $this->db_debug = isset($this->settings['debug']) ? $this->settings['debug'] : false;
+                if(isset($this->settings['debug'])) {
+                    $this->db_debug = $this->settings['debug'];
+                }else{
+                    $this->addError('ERROR Database settings debug not set');
+                    return false;
+                }
                 if($this->db_debug) {
-                    //$this->displayError();
-                    $this->addError('Success Database settings loaded from file');
+                    $this->addError('Debug On');
                 }
                 return $this->settings;
             }
@@ -95,10 +126,15 @@ class db_class{
        elseif(file_exists($dbconfigfile))
         {
                 $this->settings = include($dbconfigfile);
-                $this->db_debug = isset($this->settings['debug']) ? $this->settings['debug'] : false;
+                if(isset($this->settings['debug'])) {
+                    $this->db_debug = $this->settings['debug'];
+                }else{
+                    $this->addError('ERROR Database settings debug not set');
+                    return false;
+                }
+
                 if($this->db_debug) {
-                    //$this->displayError();
-                    $this->addError('Success Database settings loaded from file');
+                    $this->addError('Debug On');
                 }
                 return $this->settings;
         }
