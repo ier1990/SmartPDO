@@ -34,6 +34,24 @@ Overall, the db_class.php file provides a solid foundation for handling database
 //$query = 'SELECT * FROM table';
 //$result = $db->query($query);
 //var_dump($result);
+/*
+example dbconfig array
+
+$dbconfig = array(
+  'path' => 'C:/xampp/htdocs/ier1990/PHP-PDO-Class/private/dbconfig.php',
+  'dbtype' => 'mysql',
+  'port' => '3306',
+  'host' => 'localhost',
+  'dbname' => 'test',
+  'username' => 'root',
+  'password' => 'password',
+  'charset' => 'utf8',
+  'debug' => '0',
+) ;
+include('db_class.php');
+$db = new db_class($dbconfig);
+
+*/
 
 
 //class api
